@@ -1,0 +1,56 @@
+{
+	"info": {
+		"_postman_id": "a5e2bf54-b76a-41a8-9935-2844d41201a9",
+		"name": "Todo App",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Crear task",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"t1\",\r\n    \"description\": \"d1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/todo-app/task",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"todo-app",
+						"task"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener todas las task",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/todo-app/all-tasks",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"todo-app",
+						"all-tasks"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
