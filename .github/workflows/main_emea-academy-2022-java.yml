@@ -4,10 +4,15 @@
 name: Build and deploy JAR app to Azure Web App - emea-academy-2022-java
 
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - staging # azure deployment is triggered when code reaches the "staging" branch
   workflow_dispatch:
+      inputs:
+      test_name:
+        description: 'Automatic test execution, build and deploy onto Azure'
+        required: false
+        default: 'Build and deploy'
 
 jobs:
   build:
