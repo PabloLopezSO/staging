@@ -40,6 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.extern.log4j.Log4j2;
+import queue.QueueConnection;
+import queue.QueueProcess;
 
 
 
@@ -70,6 +72,11 @@ public class TodoAppController {
 	@GetMapping("/tasks")
 	public ResponseEntity<PageDecorator<TaskDTODetail>> getAllRecordsByCreationDate(@RequestParam Optional<Integer> status, @RequestParam Optional<String> keyword, 
 	@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") Optional<Integer> size, @RequestParam(name = "size") Optional<Integer> customSize) {
+
+		QueueProcess process = new QueueProcess();
+		String connection = new QueueConnection().getAzureStorageConnection();
+		process.addQueueMessage(connection, "thumbnail-generator", "First queue test");
+
 
 		return new ResponseEntity<>(taskService.allRecords(status, keyword, size, customSize, page), HttpStatus.OK);
 	}
