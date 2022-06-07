@@ -40,8 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.extern.log4j.Log4j2;
-import queue.QueueConnection;
-import queue.QueueProcess;
+import com.example.demo.queue.QueueConnection;
+import com.example.demo.queue.QueueProcess;
 
 
 

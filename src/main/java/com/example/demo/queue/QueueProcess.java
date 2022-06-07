@@ -1,4 +1,4 @@
-package queue;
+package com.example.demo.queue;
 
 import com.azure.core.util.*;
 import com.azure.storage.queue.*;
