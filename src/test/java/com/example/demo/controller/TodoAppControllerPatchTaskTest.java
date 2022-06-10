@@ -11,6 +11,7 @@ import com.example.demo.domain.User;
 import com.example.demo.repository.TaskRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.LoginService;
+import com.example.demo.service.TaskService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class TodoAppControllerPatchTaskTest {
 	@Autowired
 	UserRepository userRepository;
 
+	@Autowired
+	TaskService taskService;
+
     @Mock
     private TaskRepository mockTaskRepo;
 	
@@ -58,20 +62,24 @@ class TodoAppControllerPatchTaskTest {
 	@MockBean
     private LoginService ls;
 
+	@Mock
+	private TaskService ts;
+
     @Test
 	void testCompletePatchIsCorrect() throws Exception {
-
-		User user1 = User.builder().mail("testmail@softwareone.com").build();
-		userRepository.save(user1);
-		Task task = Task.builder().id(1).title("title").description("description").dueDate(LocalDateTime.now()).createdDate(LocalDateTime.now()).status(1).creator(1).build();
+		LocalDateTime date = LocalDateTime.of(2026, 4, 21, 10, 00, 27);
+		User user = User.builder().id(1).mail("testmail@softwareone.com").build();
+		userRepository.save(user);
+		Task task = Task.builder().title("title33333").description("description").dueDate(date).createdDate(LocalDateTime.now()).status(1).creator(1).assignee(1).build();
 		todoAppRepository.save(task);
 
-		Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
-		
-		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
+		String taskPatch = "{\"title\": \"title patched\", \"description\": \"description patched\", \"status\": 3, \"dueDate\":\"2023-02-02 10:00:27\"}";
 
-        String taskPatch = "{\"title\": \"title patched\", \"description\": \"description patched\", \"status\": 3, \"dueDate\":\"2023-02-02 10:00:27\" }";
+		Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");	
+		Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);	
+
+		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/api/tasks/1").header("Authorization", token).contentType("application/json").content(taskPatch))
 			.andExpect(status().isOk())
@@ -94,7 +102,8 @@ class TodoAppControllerPatchTaskTest {
         String taskPatch = "{\"title\": \"title patched\", \"description\": \"description patched\", \"status\": 3, \"dueDate\":\"2023-02-02 10:00:27\" }";
 
         Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");
+		Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);		
 		
 		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
 
@@ -116,7 +125,8 @@ class TodoAppControllerPatchTaskTest {
 		String taskPatch = taskDetails;
 
 		Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");	
+		Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);	
 		
 		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
 
@@ -153,7 +163,8 @@ class TodoAppControllerPatchTaskTest {
 		String taskPatch = taskDetails;
 
 		Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");
+		Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);		
 		
 		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
 
@@ -172,7 +183,27 @@ class TodoAppControllerPatchTaskTest {
 			// Expected dueDate is correct
 			Arguments.of("{\"dueDate\":\"2023-02-02 10:00:27\"}","dueDate","2023-02-02 10:00:27")
 		);
-	}
-    
+	} 
+	@Test
+	void testUserIsNotCreatorOrAssegneePatch() throws Exception {
+		
+		User user1 = User.builder().mail("testmail@softwareone.com").build();
+		userRepository.save(user1);
+		Task task = Task.builder().title("title").description("description").dueDate(LocalDateTime.now()).createdDate(LocalDateTime.now()).status(1).creator(1).build();
+
+		todoAppRepository.save(task);
+
+        String taskPatch = "{\"title\": \"title patched\", \"description\": \"description patched\", \"status\": 3, \"dueDate\":\"2023-02-02 10:00:27\" }";
+
+        Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail2@softwareone.com");
+		Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.FALSE);		
+		
+		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/tasks/1").header("Authorization", token).contentType("application/json").content(taskPatch))
+            .andExpect(status().isBadRequest());
+		
+	} 
 }
    

@@ -23,6 +23,7 @@ import com.example.demo.domain.Task;
 import com.example.demo.domain.Progress;
 import com.example.demo.repository.ProgressRepository;
 import com.example.demo.repository.TaskRepository;
+import com.example.demo.repository.UserRepository;
 
 @Service
 public class TaskService {
@@ -32,14 +33,16 @@ public class TaskService {
 	private ProgressService progressService;
 	private ProgressRepository progressRepository;
 	private FileService fileService;
+	private UserRepository userRepository;
 	
 	
 	@Autowired
-	public TaskService(TaskRepository todoAppRepository, ProgressService progressService, ProgressRepository progressRepository, FileService fileService) {
+	public TaskService(TaskRepository todoAppRepository, ProgressService progressService, ProgressRepository progressRepository, UserRepository userRepository, FileService fileService) {
 		this.taskRepository = todoAppRepository;
 		this.progressService = progressService;
 		this.progressRepository = progressRepository;
 		this.fileService = fileService;
+		this.userRepository = userRepository;
 	}
 
 	public Task insert(Task task) {
@@ -84,7 +87,6 @@ public class TaskService {
 			throw new NoSuchIdException(String.format("The task with ID '%d' does not exist ",id));
 		}
 
-	
 	}
 
 	private Boolean isValidStatus(Integer status){
@@ -197,38 +199,56 @@ public class TaskService {
 
 		Optional<Task> foundTaskById = taskRepository.findById(taskId);
 
-			if (foundTaskById.isPresent()) {
+		if (foundTaskById.isPresent()) {
 
-				Task taskToDelete = foundTaskById.get();
+			Task taskToDelete = foundTaskById.get();
 
-				if (TaskStatus.from(taskToDelete.getStatus()).equals(TaskStatus.DONE)) {
+			if (TaskStatus.from(taskToDelete.getStatus()).equals(TaskStatus.DONE)) {
 					
-					List<Progress> progressList = progressRepository.findAllByTaskId(taskId);
+				List<Progress> progressList = progressRepository.findAllByTaskId(taskId);
 					
-        			for (Progress progress : progressList) {
+        		for (Progress progress : progressList) {
 
-            			progressRepository.delete(progress);
-        			}
-					fileService.deleteFiles(taskId);
-					taskRepository.delete(taskToDelete);
-
-				} else {
-
-				//Invalid delete operation: only Done status tasks can be removed"
-				throw new InvalidParamException("The status  must be done");
-
-				}
+    			progressRepository.delete(progress);
+        		}
+				fileService.deleteFiles(taskId);
+				taskRepository.delete(taskToDelete);
 
 			} else {
 
-				//Error: the indicated task Id couldn't be found"
-				
-				throw new NoSuchIdException("Task not found");
-			}
-	
+			//Invalid delete operation: only Done status tasks can be removed"
+			throw new InvalidParamException("The status  must be done");
 
+			}
+
+		} else {
+			//Error: the indicated task Id couldn't be found"
+			
+			throw new NoSuchIdException("Task not found");
+		}
+	
 	}
 	
+	public boolean validateCreatorOrAssignee(Integer taskid, String creator){
 
+		Optional<Task> taskFind=taskRepository.findTaskById(taskid);
+		
+		if(taskFind.isPresent()){
+			Task task = taskFind.get();
+
+			String userCreator = userRepository.findNameById(task.getCreator());
+			String userAssignee = userRepository.findNameById(task.getAssignee());
+
+			if((creator.equals(userCreator))||(creator.equals(userAssignee))){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else{
+			throw new NoSuchIdException("Task no encontrada");
+		}
+	}
 }
 

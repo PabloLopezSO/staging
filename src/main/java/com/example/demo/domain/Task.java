@@ -57,6 +57,8 @@ public class Task {
 	@JsonInclude(Include.NON_NULL)
 	private Integer creator;
 
+	private Integer assignee;
+
 	private String file1;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

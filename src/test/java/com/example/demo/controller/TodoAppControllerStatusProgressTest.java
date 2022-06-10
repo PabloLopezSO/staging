@@ -6,7 +6,7 @@ import com.example.demo.domain.User;
 import com.example.demo.repository.TaskRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.LoginService;
-
+import com.example.demo.service.TaskService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,13 +55,17 @@ class TodoAppControllerStatusProgressTest {
 	@MockBean
     private LoginService ls;
 
+    @Mock
+	private TaskService ts;
+
     @Test
     void statusCreated() throws Exception{
 
         String taskToInsert = "{\r\n    \"title\": \"title 1\",\r\n    \"description\": \"Testing description\", \"dueDate\":\"2023-02-02 10:10:00\" }";
       
 		Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");	
+        Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);	
 		
 		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
 
@@ -88,6 +92,7 @@ class TodoAppControllerStatusProgressTest {
 
         Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
 		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");	
+        Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);
 
         String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
 
@@ -113,7 +118,8 @@ class TodoAppControllerStatusProgressTest {
         User user1 = User.builder().mail("testmail@softwareone.com").build();
 		userRepository.save(user1);
         Mockito.when(ls.validateToken(ArgumentMatchers.anyString())).thenReturn(Boolean.TRUE);
-		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");		
+		Mockito.when(ls.getUsernameFromToken(ArgumentMatchers.any())).thenReturn("testmail@softwareone.com");	
+        Mockito.when(ts.validateCreatorOrAssignee(ArgumentMatchers.any(),ArgumentMatchers.any())).thenReturn(Boolean.TRUE);	
 		
 		String token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";	
 

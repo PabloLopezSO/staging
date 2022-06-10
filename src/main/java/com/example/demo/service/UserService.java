@@ -23,14 +23,9 @@ public class UserService {
 
 		return userRepository.findAll();
 		
-	}
-
-	public User insert(User user) {
-		return userRepository.save(user);
-        
-    }   
+	}  
 	
-	public Integer isStored(String creator){
+	public Integer checkUserAndSave(String creator){
 
 		Optional<User> userOptional = userRepository.findByMail(creator);
 		

@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -40,6 +41,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 @Log4j2
 public class LoginService {
 
+	private UserService userService;
+
 	@Value("${spring.security.oauth2.client.registration.client-id}")
     private String registrationClientId;
 
@@ -60,6 +63,11 @@ public class LoginService {
 		this.registrationClientSecret = registrationClientSecret;
 		this.registrationClientScope = registrationClientScope;
 		this.registrationClientGrantType = registrationClientGrantType;
+	}
+	
+	@Autowired
+	public LoginService(UserService userService){
+		this.userService = userService;
 	}
 
 	public LoginService(){
@@ -152,6 +160,8 @@ public class LoginService {
 		JsonNode idToken = rootNode.path("id_token");
 		
 		String userCredentialsToken = idToken.toString();
+
+		userService.checkUserAndSave(credentialsUsername);
 
 		return (userCredentialsToken);	
 

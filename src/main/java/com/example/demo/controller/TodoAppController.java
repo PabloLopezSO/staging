@@ -5,15 +5,19 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.example.demo.decorator.PageDecorator;
 import com.example.demo.domain.Progress;
 import com.example.demo.domain.Task;
+import com.example.demo.domain.User;
 import com.example.demo.domain.TaskStatus;
 import com.example.demo.dtos.TaskDTOUpdate;
 import com.example.demo.dtos.UserCredentialsDTO;
+import com.example.demo.exception.InvalidParamException;
 import com.example.demo.repository.TaskRepository;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.dtos.ProgressListDTO;
 import com.example.demo.dtos.TaskDTODetail;
 import com.example.demo.service.FileService;
@@ -40,8 +44,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import lombok.extern.log4j.Log4j2;
-import com.example.demo.queue.QueueConnection;
-import com.example.demo.queue.QueueProcess;
 
 
 
@@ -72,11 +74,6 @@ public class TodoAppController {
 	@GetMapping("/tasks")
 	public ResponseEntity<PageDecorator<TaskDTODetail>> getAllRecordsByCreationDate(@RequestParam Optional<Integer> status, @RequestParam Optional<String> keyword, 
 	@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") Optional<Integer> size, @RequestParam(name = "size") Optional<Integer> customSize) {
-
-		QueueProcess process = new QueueProcess();
-		String connection = new QueueConnection().getAzureStorageConnection();
-		process.addQueueMessage(connection, "thumbnail-generator", "First queue test");
-
 
 		return new ResponseEntity<>(taskService.allRecords(status, keyword, size, customSize, page), HttpStatus.OK);
 	}
@@ -138,58 +135,62 @@ public class TodoAppController {
 	@PostMapping("/tasks")
 	public ResponseEntity<Task> addTask( @RequestBody Task task) {
 
-		String creator = SecurityContextHolder.getContext().getAuthentication().getName();
+		
 
-		log.info("task {} request to be inserted", task.getTitle());
+			String creator = SecurityContextHolder.getContext().getAuthentication().getName();
 
-		try {
+			log.info("task {} request to be inserted", task.getTitle());
 
-			log.info("Looking for a repeated task with the same title as given");
-			if (taskRepository.findByTitle(task.getTitle()).isPresent()) {
+			try {
 
-				log.info("The title is repeated so the 409 http status code");
-				return new ResponseEntity<>(HttpStatus.CONFLICT);
+				log.info("Looking for a repeated task with the same title as given");
+				if (taskRepository.findByTitle(task.getTitle()).isPresent()) {
+
+					log.info("The title is repeated so the 409 http status code");
+					return new ResponseEntity<>(HttpStatus.CONFLICT);
+				}
+
+				log.info("Reviewing that every field is provided by the client");
+				if (task.getTitle().isEmpty() ||
+					task.getDescription().isEmpty() ||
+					task.getDueDate() == null) {
+
+					log.info("Some mandatory field is not provided so it is shown the 400 http status code ");
+					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				}
+
+				log.info("Checking if DueDateDate date is lesser than current date");
+				if (task.getDueDate().isBefore(LocalDateTime.now())) {
+
+					log.info("DueDateDate date is surpased, so it is shown the 400 http status code ");
+					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				}
+
+				Integer idUser = userService.checkUserAndSave(creator);
+							
+
+				log.info("Set the information not provided by the client as given on the issue");
+				task.setStatus(TaskStatus.TO_DO.getStatusNumber());
+				task.setCreatedDate(LocalDateTime.now());
+				task.setCreator(idUser);
+
+				
+
+				Task taskToInsert = taskService.insert(task);
+				Progress progressCreate = Progress.builder().newStatus("CREATED").modifiedDate(LocalDateTime.now()).taskId(taskToInsert.getId()).userID(idUser).build();
+				this.progressService.insert(progressCreate);
+
+				log.info("task {} inserted with id '{}' shown http status code 201", task.getTitle(), task.getId());
+
+				return new ResponseEntity<>(taskToInsert, HttpStatus.CREATED);
+
+			} catch (Exception e) {
+
+				log.info("{} error inserting '{}' task", e.getMessage(), task.getTitle());
+				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
-			log.info("Reviewing that every field is provided by the client");
-			if (task.getTitle().isEmpty() ||
-				task.getDescription().isEmpty() ||
-				task.getDueDate() == null) {
-
-				log.info("Some mandatory field is not provided so it is shown the 400 http status code ");
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-			}
-
-			log.info("Checking if DueDateDate date is lesser than current date");
-			if (task.getDueDate().isBefore(LocalDateTime.now())) {
-
-				log.info("DueDateDate date is surpased, so it is shown the 400 http status code ");
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-			}
-
-			Integer idUser = userService.isStored(creator);
-						
-
-			log.info("Set the information not provided by the client as given on the issue");
-			task.setStatus(TaskStatus.TO_DO.getStatusNumber());
-			task.setCreatedDate(LocalDateTime.now());
-			task.setCreator(idUser);
-
-			
-
-			Task taskToInsert = taskService.insert(task);
-			Progress progressCreate = Progress.builder().newStatus("CREATED").modifiedDate(LocalDateTime.now()).taskId(taskToInsert.getId()).userID(idUser).build();
-			this.progressService.insert(progressCreate);
-
-			log.info("task {} inserted with id '{}' shown http status code 201", task.getTitle(), task.getId());
-
-			return new ResponseEntity<>(taskToInsert, HttpStatus.CREATED);
-
-		} catch (Exception e) {
-
-			log.info("{} error inserting '{}' task", e.getMessage(), task.getTitle());
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		
 
 	}
 
@@ -201,20 +202,24 @@ public class TodoAppController {
 			
     }
 	
-
 	@PatchMapping(value = {"/tasks/{taskid}","/v2/tasks/{taskid}"})
 	public TaskDTOUpdate patchATaskById(@PathVariable Integer taskid, @RequestBody TaskDTOUpdate taskdto){
-		
-		
+
 		String creator = SecurityContextHolder.getContext().getAuthentication().getName();
+		
+		if(taskService.validateCreatorOrAssignee(taskid, creator)){
 
-		log.debug("Analyze if the user is in the database");
-		Integer idUser = userService.isStored(creator);
+			log.debug("Analyze if the user is in the database");
+			Integer idUser = userService.checkUserAndSave(creator);
 
-		log.debug("Update the task and the status progress");
-		return TaskDTOUpdate.taskToTaskDTOUpdate(taskService.updateATask(taskid, taskdto, idUser));
-
+			log.debug("Update the task and the status progress");
+			return TaskDTOUpdate.taskToTaskDTOUpdate(taskService.updateATask(taskid, taskdto, idUser));
+		
+		}else {
+			throw new InvalidParamException("The user has not permission");
+		}
 	}
+
 	@PostMapping("/login")
 	public ResponseEntity<String> doLogin(@RequestBody UserCredentialsDTO userCredentials) throws JsonProcessingException {
 
