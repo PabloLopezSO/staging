@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 import com.example.demo.domain.TaskStatus;
+import com.example.demo.domain.User;
 import com.example.demo.dtos.PaginationDTO;
 import com.example.demo.dtos.TaskDTODetail;
 import com.example.demo.dtos.TaskDTOUpdate;
@@ -34,6 +35,7 @@ public class TaskService {
 	private ProgressRepository progressRepository;
 	private FileService fileService;
 	private UserRepository userRepository;
+
 	
 	
 	@Autowired
@@ -49,6 +51,8 @@ public class TaskService {
 
 		return taskRepository.save(task);
 	}
+
+	private String NOT_FOUND = "Task not found";
 
 	@Transactional
 	public Task updateATask(Integer id, TaskDTOUpdate taskdto, Integer userId){		
@@ -221,33 +225,56 @@ public class TaskService {
 
 			}
 
+
 		} else {
 			//Error: the indicated task Id couldn't be found"
 			
-			throw new NoSuchIdException("Task not found");
+			throw new NoSuchIdException(NOT_FOUND);
 		}
 	
 	}
+
+	public Boolean validateCreatorOrAssignee(Integer taskid, String creator){
+		
+		Task task = checkTaskPresent(taskid);
+
+		String userCreator = userRepository.findNameById(task.getCreator());
+		String userAssignee = userRepository.findNameById(task.getAssignee());
+
+		return ((creator.equals(userCreator))||(creator.equals(userAssignee)));
+	}
 	
-	public boolean validateCreatorOrAssignee(Integer taskid, String creator){
+	public Task checkTaskPresent(Integer taskid){
 
 		Optional<Task> taskFind=taskRepository.findTaskById(taskid);
 		
 		if(taskFind.isPresent()){
-			Task task = taskFind.get();
+			
+			return taskFind.get();
 
-			String userCreator = userRepository.findNameById(task.getCreator());
-			String userAssignee = userRepository.findNameById(task.getAssignee());
-
-			if((creator.equals(userCreator))||(creator.equals(userAssignee))){
-				return true;
-			}
-			else{
-				return false;
-			}
 		}
 		else{
-			throw new NoSuchIdException("Task no encontrada");
+			throw new NoSuchIdException(NOT_FOUND);
+		}
+	}
+
+	@Transactional
+	public boolean modifyAssignee(Integer taskid, String currentUser){
+		
+		Task task = checkTaskPresent(taskid);
+		Optional<User> userOptional = userRepository.findByMail(currentUser);
+		if(!userOptional.isEmpty()){
+
+			User userProvisional =  userOptional.get();
+			task.setAssignee(userProvisional.getId());
+			taskRepository.save(task);
+
+			return true;
+	
+		}else{
+				
+			return false;					
+
 		}
 	}
 }

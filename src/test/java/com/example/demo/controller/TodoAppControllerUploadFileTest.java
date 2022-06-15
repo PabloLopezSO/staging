@@ -1,10 +1,9 @@
 package com.example.demo.controller;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
-import java.io.File;
+
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,17 +20,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import com.example.demo.domain.Task;
 import com.example.demo.domain.User;
 import com.example.demo.repository.TaskRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.FileService;
 import com.example.demo.service.LoginService;
-
-import io.jsonwebtoken.lang.Assert;
 
 @SpringBootTest
 @AutoConfigureMockMvc

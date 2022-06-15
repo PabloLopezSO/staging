@@ -105,11 +105,14 @@ public class TodoAppController {
 				taskToShow.setFile1UploadDate(foundTaskById.get().getFile1UploadDate());
 				taskToShow.setFile2UploadDate(foundTaskById.get().getFile2UploadDate());
 				taskToShow.setFile3UploadDate(foundTaskById.get().getFile3UploadDate());
+				taskToShow.setThumbnailFile1(foundTaskById.get().getThumbnailFile1());
+				taskToShow.setThumbnailFile2(foundTaskById.get().getThumbnailFile2());
+				taskToShow.setThumbnailFile3(foundTaskById.get().getThumbnailFile3());
 				
 
 				log.info("Looking for the user with Id:  "+foundTaskById.get().getCreator());
 				taskToShow.setCreator(userService.findCreator(foundTaskById.get().getCreator()));
-				
+				taskToShow.setAssignee(userService.findCreator(foundTaskById.get().getAssignee()));
 				return new ResponseEntity<>(taskToShow, HttpStatus.OK);
 
 			} else {
@@ -254,5 +257,27 @@ public class TodoAppController {
 
     	return new ResponseEntity<>(fileService.downloadFile(taskId, slot), HttpStatus.SEE_OTHER);
 
+	}
+
+	@PatchMapping("/tasks/{taskid}/assignee/{username}")
+	public ResponseEntity<String> updateAssignee( @PathVariable Integer taskid, @PathVariable String username){
+		
+		String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+		
+		if(taskService.validateCreatorOrAssignee(taskid, currentUser)){
+
+			if(taskService.modifyAssignee(taskid, username)){
+
+				return new ResponseEntity<>(String.format("The user %s has been set as Assignee on task %d", username, taskid), HttpStatus.OK);
+			}
+			else{
+
+				throw new InvalidParamException("User not found");
+
+			}
+		
+		}else {
+			throw new InvalidParamException("The user has not permission");
+		}
 	}
 }

@@ -71,7 +71,7 @@ public class LoginService {
 	}
 
 	public LoginService(){
-		//Emnpty
+		//Empty constructor
 	}
 	
 	@PostConstruct

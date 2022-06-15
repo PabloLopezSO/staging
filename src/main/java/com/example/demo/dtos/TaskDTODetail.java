@@ -34,20 +34,28 @@ public class TaskDTODetail {
 
 	private String creator;
 
+	private String Assignee;
+
 	private String file1;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime file1UploadDate;
+
+	private String thumbnailFile1;
 
 	private String file2;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime file2UploadDate;
 
+	private String thumbnailFile2;
+
 	private String file3;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime file3UploadDate;
+
+	private String thumbnailFile3;
 
 	public TaskDTODetail(Task task){
 

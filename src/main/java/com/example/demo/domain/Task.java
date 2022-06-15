@@ -68,6 +68,8 @@ public class Task {
 
 	private String downloadFile1;
 
+	private String thumbnailFile1;
+
 	private String file2;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -77,6 +79,8 @@ public class Task {
 
 	private String downloadFile2;
 
+	private String thumbnailFile2;
+
 	private String file3;
 
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -85,6 +89,8 @@ public class Task {
 	private String azureFile3;
 
 	private String downloadFile3;
+
+	private String thumbnailFile3;
 	
 	public Task(Integer id, String title, Integer status, LocalDateTime dueDate, LocalDateTime createdDate){
 

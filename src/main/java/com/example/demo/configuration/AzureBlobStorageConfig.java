@@ -27,4 +27,11 @@ public class AzureBlobStorageConfig {
                 .buildClient();
     }
 
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public String getAccountKey() {
+        return accountKey;
+    }
 }
